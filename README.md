@@ -2,6 +2,8 @@
 
 Part of the [Vaccination Management System](https://github.com/IstiakAdil14/automating-the-vaccination-process-hackathon-project-admin).
 
+🌐 **Live:** [https://automating-the-vaccination-process-rho.vercel.app](https://automating-the-vaccination-process-rho.vercel.app)
+
 Runs on **port 3001** locally. Handles analytics, center management, staff accounts, supply chain, and fraud detection.
 
 ---
@@ -59,7 +61,9 @@ npm run test:e2e    # Playwright E2E
 
 ## 🚀 Deployment
 
-Deploy to Vercel as a standalone project. Set all env vars in the Vercel dashboard.
+Deployed on Vercel: [https://automating-the-vaccination-process-rho.vercel.app](https://automating-the-vaccination-process-rho.vercel.app)
+
+Set all env vars in the Vercel dashboard before deploying.
 
 ---
 
