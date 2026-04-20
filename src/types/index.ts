@@ -54,7 +54,9 @@ export interface Center {
   dailyCapacity:     number;
   totalVaccinations: number;
   approvedAt?:       string;
+  suspendedReason?:  string;
   createdAt:         string;
+  operatingHours?:   { day: number; morningStart?: string; morningEnd?: string; eveningStart?: string; eveningEnd?: string }[];
 }
 
 /* --- Staff -------------------------------------------------------------------- */
@@ -207,18 +209,20 @@ export interface Notification {
 
 /* --- Dashboard stats ---------------------------------------------------------- */
 export interface DashboardStats {
-  totalCitizens:         number;
-  totalVaccinated:       number;
-  totalPartial:          number;
-  coveragePercent:       number;
-  totalCenters:          number;
-  activeCenters:         number;
-  totalStaff:            number;
-  activeStaff:           number;
-  vaccinationsToday:     number;
-  vaccinationsThisWeek:  number;
-  vaccinationsThisMonth: number;
-  lowStockAlerts:        number;
-  openFraudAlerts:       number;
-  criticalFraudAlerts:   number;
+  totalCitizens?:         number;
+  totalVaccinated?:       number;
+  totalPartial?:          number;
+  coveragePercent?:       number;
+  totalCenters?:          number;
+  activeCenters?:         number;
+  totalStaff?:            number;
+  activeStaff?:           number;
+  vaccinationsToday?:     number;
+  vaccinationsThisWeek?:  number;
+  vaccinationsThisMonth?: number;
+  lowStockAlerts?:        number;
+  openFraudAlerts?:       number;
+  criticalFraudAlerts?:   number;
+  pendingAppointments?:   number;
+  fraudAlerts?:           number;
 }

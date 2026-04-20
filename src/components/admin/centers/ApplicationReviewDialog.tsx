@@ -94,7 +94,7 @@ export function ApplicationReviewDialog({ center, open, onClose, onReviewed }: P
           </div>
 
           {/* Operating hours */}
-          {center.operatingHours?.length > 0 && (
+          {(center.operatingHours?.length ?? 0) > 0 && (
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--foreground-muted)]">
                 Operating Hours
@@ -109,7 +109,7 @@ export function ApplicationReviewDialog({ center, open, onClose, onReviewed }: P
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)]">
-                    {center.operatingHours.map((h) => (
+                    {center.operatingHours?.map((h) => (
                       <tr key={h.day}>
                         <td className="px-3 py-2 font-medium">{DAY_NAMES[h.day]}</td>
                         <td className="px-3 py-2 text-[var(--foreground-muted)]">

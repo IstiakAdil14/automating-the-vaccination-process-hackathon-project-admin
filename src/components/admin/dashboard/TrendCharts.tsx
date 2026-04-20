@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  defs, linearGradient, stop,
 } from "recharts";
 import { TrendingUp, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";

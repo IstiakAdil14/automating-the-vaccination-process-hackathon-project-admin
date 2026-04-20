@@ -138,7 +138,7 @@ export async function getPerCenterStock(filters?: {
   const vaccines = await Vaccine.find({ isActive: true }).lean();
   const now      = new Date();
 
-  const rows: CenterStockRow[] = await Promise.all(
+  const rows = await Promise.all(
     centers.map(async (c) => {
       const invRecords = await Inventory.find({ centerId: c._id, expiryDate: { $gt: now } }).lean();
 

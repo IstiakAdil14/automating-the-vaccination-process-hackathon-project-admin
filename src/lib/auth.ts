@@ -120,6 +120,7 @@ const config: NextAuthConfig = {
         permissions: token.permissions,
         division:    token.division,
         lastLogin:   token.lastLogin,
+        emailVerified: null,
       };
       return session;
     },
