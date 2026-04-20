@@ -1,6 +1,6 @@
 # 🛠️ Vaccination Admin — Government Authority Dashboard
 
-Part of the [Vaccination Management System](https://github.com/your-org/vaccination-project).
+Part of the [Vaccination Management System](https://github.com/IstiakAdil14/automating-the-vaccination-process-hackathon-project-admin).
 
 Runs on **port 3001** locally. Handles analytics, center management, staff accounts, supply chain, and fraud detection.
 
