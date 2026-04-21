@@ -5,7 +5,7 @@ import {
   User, Syringe, Calendar, Heart, Shield, Users,
   ShieldCheck, ShieldAlert, Ban, Download, Loader2, CheckCircle2,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,15 +67,17 @@ export function CitizenProfileDrawer({ citizenId, onClose, onUpdate }: Props) {
         <SheetContent side="right" className="flex w-full max-w-2xl flex-col p-0 sm:max-w-2xl">
           {/* Header */}
           <SheetHeader className="border-b border-[var(--border)] px-6 py-4">
+            <SheetTitle className="sr-only">{profile?.name ?? "Citizen Profile"}</SheetTitle>
+            <SheetDescription className="sr-only">Citizen profile details and admin actions</SheetDescription>
             {loading || !profile ? (
               <div className="space-y-2"><Skeleton className="h-6 w-40" /><Skeleton className="h-4 w-28" /></div>
             ) : (
               <div className="flex items-center gap-4 pr-8">
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[var(--background-subtle)] text-xl font-bold text-[var(--foreground-muted)]">
-                  {profile.name.charAt(0)}
+                  {profile.name?.charAt(0) ?? "?"}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <SheetTitle className="truncate">{profile.name}</SheetTitle>
+                  <p className="truncate font-semibold text-[var(--foreground)]">{profile.name}</p>
                   <p className="text-xs text-[var(--foreground-muted)]">{profile.userId}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">

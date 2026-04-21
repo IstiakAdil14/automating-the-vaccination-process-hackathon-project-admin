@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
+import { NidRecord } from "@/models/NidRecord";
 import { VaccinationRecord } from "@/models/VaccinationRecord";
 import { getAdminSession } from "@/lib/getAdminSession";
 import {
-  SuspendCitizenSchema, VerifyIdentitySchema, MergeAccountsSchema,
-  type SuspendCitizenInput, type VerifyIdentityInput, type MergeAccountsInput,
+  SuspendCitizenSchema, VerifyIdentitySchema, MergeAccountsSchema, AddNidUserSchema,
+  type SuspendCitizenInput, type VerifyIdentityInput, type MergeAccountsInput, type AddNidUserInput,
 } from "@/lib/schemas/users";
 import type { ActionResult } from "./centers";
 
@@ -126,7 +127,7 @@ export async function getCitizenProfile(userId: string): Promise<ActionResult<{
     name:              user.name,
     phone:             user.phone,
     email:             user.email,
-    dateOfBirth:       user.dateOfBirth?.toISOString() ?? "",
+    dateOfBirth:       user.dateOfBirth ? new Date(user.dateOfBirth).toISOString() : "",
     gender:            user.gender,
     division:          user.address?.division ?? "",
     district:          user.address?.district ?? "",
@@ -270,6 +271,23 @@ export async function mergeAccounts(raw: MergeAccountsInput): Promise<ActionResu
 
   revalidatePath("/users");
   return { ok: true, data: undefined };
+}
+
+/* --- addNidUser --------------------------------------------------------------- */
+export async function addNidUser(raw: AddNidUserInput): Promise<ActionResult<{ nid: string }>> {
+  const parsed = AddNidUserSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: parsed.error.errors[0]?.message ?? "Validation failed" };
+
+  await getAdminSession();
+  await connectDB();
+
+  const exists = await NidRecord.findOne({ nid: parsed.data.nid }).lean();
+  if (exists) return { ok: false, error: "This NID is already in the approved list" };
+
+  await NidRecord.create({ nid: parsed.data.nid, addedBy: "admin" });
+
+  revalidatePath("/users");
+  return { ok: true, data: { nid: parsed.data.nid } };
 }
 
 /* --- generateDataExport ------------------------------------------------------- */

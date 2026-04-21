@@ -23,6 +23,11 @@ export const MergeAccountsSchema = z.object({
   note:        z.string().min(5, "Note required"),
 });
 
+export const AddNidUserSchema = z.object({
+  nid: z.string().regex(/^\d{10}(\d{3})?$/, "NID must be 10 or 13 digits"),
+});
+
 export type SuspendCitizenInput  = z.infer<typeof SuspendCitizenSchema>;
 export type VerifyIdentityInput  = z.infer<typeof VerifyIdentitySchema>;
 export type MergeAccountsInput   = z.infer<typeof MergeAccountsSchema>;
+export type AddNidUserInput      = z.infer<typeof AddNidUserSchema>;
