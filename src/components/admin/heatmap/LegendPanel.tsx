@@ -18,7 +18,7 @@ export function LegendPanel({ layers, onLayerToggle, threshold, onThresholdChang
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="pointer-events-auto w-64 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xl space-y-4"
+      className="pointer-events-auto w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xl space-y-4"
     >
       {/* Header */}
       <div className="flex items-center gap-2">

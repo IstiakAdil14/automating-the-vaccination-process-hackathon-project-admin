@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback, useTransition, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Loader2, Layers, SlidersHorizontal, X } from "lucide-react";
 import dynamic from "next/dynamic";
+import { AnimatePresence, motion } from "framer-motion";
 import { FilterPanel } from "@/components/admin/heatmap/FilterPanel";
 import { LegendPanel } from "@/components/admin/heatmap/LegendPanel";
 import { DrillDownBreadcrumb, useDrillDown } from "@/components/admin/heatmap/DrillDownHandler";
@@ -87,37 +89,88 @@ export default function HeatmapPage() {
     console.log("Map clicked:", lat, lng);
   }, []);
 
-  return (
-    /* Break out of the shell's p-4/p-6 padding and fill the remaining viewport height */
-    <div className="-m-4 lg:-m-6 flex overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}>
+  const [mobilePanel, setMobilePanel] = useState<"filters" | "layers" | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-      {/* ── Left sidebar: controls ── */}
-      <aside className="flex w-96 flex-shrink-0 flex-col gap-4 overflow-y-auto border-r border-[var(--border)] bg-[var(--surface)] p-4">
-
-        {/* Export */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground-muted)]">
-            Heatmap
-          </span>
+  const mobileFabs = mounted && createPortal(
+    <>
+      {/* Top bar: breadcrumb left, export right */}
+      <div className="pointer-events-none fixed top-16 inset-x-0 z-[9999] flex items-start justify-between p-3 lg:hidden">
+        <div className="pointer-events-auto">
+          <DrillDownBreadcrumb breadcrumbs={breadcrumbs} onNavigate={handleBreadcrumbNav} />
+        </div>
+        <div className="pointer-events-auto">
           <ExportButton mapContainerId={MAP_CONTAINER_ID} divisions={divisions} />
         </div>
+      </div>
 
-        {/* Filters */}
+      {/* FABs */}
+      <div className="fixed bottom-6 left-1/2 z-[9999] flex -translate-x-1/2 gap-2 lg:hidden">
+        <button
+          onClick={() => setMobilePanel((p) => (p === "filters" ? null : "filters"))}
+          className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-medium shadow-xl"
+        >
+          <SlidersHorizontal className="h-4 w-4 text-[var(--health-green-500)]" />
+          Filters
+        </button>
+        <button
+          onClick={() => setMobilePanel((p) => (p === "layers" ? null : "layers"))}
+          className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-medium shadow-xl"
+        >
+          <Layers className="h-4 w-4 text-[var(--health-green-500)]" />
+          Layers
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {mobilePanel && (
+          <motion.div
+            key={mobilePanel}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-20 left-1/2 z-[9999] w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-2xl lg:hidden"
+            style={{ maxHeight: "60vh" }}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground-muted)]">
+                {mobilePanel === "filters" ? "Filters" : "Layers & Legend"}
+              </span>
+              <button
+                onClick={() => setMobilePanel(null)}
+                className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--foreground-muted)] hover:bg-[var(--background-subtle)]"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {mobilePanel === "filters"
+              ? <FilterPanel filters={filters} onChange={handleFilterChange} loading={isPending} />
+              : <LegendPanel layers={layers} onLayerToggle={toggleLayer} threshold={threshold} onThresholdChange={handleThresholdChange} />
+            }
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>,
+    document.body
+  );
+
+  return (
+    <div className="-m-4 lg:-m-6 flex overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}>
+
+      {/* ── Desktop sidebar ── */}
+      <aside className="hidden lg:flex w-80 xl:w-96 flex-shrink-0 flex-col gap-4 overflow-y-auto border-r border-[var(--border)] bg-[var(--surface)] p-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground-muted)]">Heatmap</span>
+          <ExportButton mapContainerId={MAP_CONTAINER_ID} divisions={divisions} />
+        </div>
         <FilterPanel filters={filters} onChange={handleFilterChange} loading={isPending} />
-
-        {/* Legend + layers */}
-        <LegendPanel
-          layers={layers}
-          onLayerToggle={toggleLayer}
-          threshold={threshold}
-          onThresholdChange={handleThresholdChange}
-        />
+        <LegendPanel layers={layers} onLayerToggle={toggleLayer} threshold={threshold} onThresholdChange={handleThresholdChange} />
       </aside>
 
-      {/* ── Right: map + breadcrumb overlay ── */}
+      {/* ── Map pane ── */}
       <div className="relative flex-1 overflow-hidden">
-
-        {/* Map fills the entire right pane */}
         <div id={MAP_CONTAINER_ID} className="absolute inset-0">
           <VaccinationHeatmap
             containerId={MAP_CONTAINER_ID}
@@ -130,14 +183,16 @@ export default function HeatmapPage() {
           />
         </div>
 
-        {/* Breadcrumb — floats top-left over the map only */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3">
+        {/* Desktop breadcrumb overlay */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 hidden p-3 lg:flex">
           <div className="pointer-events-auto">
             <DrillDownBreadcrumb breadcrumbs={breadcrumbs} onNavigate={handleBreadcrumbNav} />
           </div>
         </div>
 
-        {/* Loading overlay — covers only the map pane */}
+        {mobileFabs}
+
+        {/* Loading overlay */}
         {isPending && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
             <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 shadow-xl">

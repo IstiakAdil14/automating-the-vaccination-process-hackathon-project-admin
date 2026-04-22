@@ -1,7 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Center } from "@/models/Center";
+import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
+
+// Loose model for center_applications collection
+const AppSchema = new mongoose.Schema({}, { strict: false, collection: "center_applications", timestamps: true });
+const CenterApp = mongoose.models.CenterApp ?? mongoose.model("CenterApp", AppSchema);
+
+// Map center_application doc → Center-shaped object the table expects
+function mapApp(doc: Record<string, unknown>) {
+  return {
+    _id:               String(doc._id),
+    centerId:          doc.referenceNumber,
+    name:              doc.centerName,
+    licenseNo:         doc.licenseNumber,
+    type:              "GOVT_HOSPITAL" as const,
+    status:            "PENDING" as const,
+    geoLat:            doc.geoLat ?? 0,
+    geoLng:            doc.geoLng ?? 0,
+    address: {
+      division: doc.division,
+      district: doc.district,
+      upazila:  doc.upazila ?? doc.localBodyName ?? "",
+      full:     doc.address,
+    },
+    contact: {
+      name:  doc.contactName,
+      phone: doc.phone,
+      email: doc.email,
+    },
+    dailyCapacity:     doc.capacity ?? 100,
+    totalVaccinations: 0,
+    facilityLicenseUrl: doc.facilityLicenseUrl,
+    centerPhotoUrl:     doc.centerPhotoUrl,
+    officerNidUrl:      doc.officerNidUrl,
+    referenceNumber:    doc.referenceNumber,
+    localBodyType:      doc.localBodyType,
+    createdAt:          doc.createdAt,
+    updatedAt:          doc.updatedAt,
+  };
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -19,11 +58,36 @@ export async function GET(req: NextRequest) {
 
   await connectDB();
 
-  /* Build filter */
+  const allowedSort = ["name", "createdAt", "totalVaccinations", "dailyCapacity", "status"];
+  const safeSort = allowedSort.includes(sortBy) ? sortBy : "createdAt";
+
+  // If filtering for PENDING — read from center_applications
+  if (status === "PENDING") {
+    const appFilter: Record<string, unknown> = { status: "pending_review" };
+    if (division) appFilter.division = division;
+    if (search) {
+      appFilter.$or = [
+        { centerName:  { $regex: search, $options: "i" } },
+        { licenseNumber: { $regex: search, $options: "i" } },
+        { district:    { $regex: search, $options: "i" } },
+      ];
+    }
+    const sortField = sortBy === "name" ? "centerName" : sortBy === "totalVaccinations" ? "createdAt" : sortBy;
+    const [apps, total] = await Promise.all([
+      CenterApp.find(appFilter).sort({ [sortField]: sortDir }).skip((page - 1) * limit).limit(limit).lean(),
+      CenterApp.countDocuments(appFilter),
+    ]);
+    return NextResponse.json({
+      data:       (apps as Record<string, unknown>[]).map(mapApp),
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  }
+
+  // All other filters — read from centers collection
   const filter: Record<string, unknown> = {};
-  if (status)   filter.status             = status;
+  if (status)   filter.status              = status;
   if (division) filter["address.division"] = division;
-  if (type)     filter.type               = type;
+  if (type)     filter.type                = type;
   if (search) {
     filter.$or = [
       { name:      { $regex: search, $options: "i" } },
@@ -32,15 +96,8 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  const allowedSort = ["name", "createdAt", "totalVaccinations", "dailyCapacity", "status"];
-  const safeSort = allowedSort.includes(sortBy) ? sortBy : "createdAt";
-
   const [centers, total] = await Promise.all([
-    Center.find(filter)
-      .sort({ [safeSort]: sortDir })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean(),
+    Center.find(filter).sort({ [safeSort]: sortDir }).skip((page - 1) * limit).limit(limit).lean(),
     Center.countDocuments(filter),
   ]);
 
