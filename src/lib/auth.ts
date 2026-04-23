@@ -131,6 +131,8 @@ const config: NextAuthConfig = {
     error:  "/login",
   },
 
+  trustHost: true,
+
   session: {
     strategy:  "jwt",
     maxAge:    8 * 60 * 60,   /* 8 hours */

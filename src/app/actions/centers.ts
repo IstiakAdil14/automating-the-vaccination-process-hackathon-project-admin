@@ -141,6 +141,15 @@ export async function reviewApplication(
     center.suspendedReason = parsed.data.reason;
   }
   await center.save();
+  if (center.contact.email) {
+    sendReviewEmail(
+      center.contact.email,
+      center.contact.name,
+      center.name,
+      parsed.data.action === "approve",
+      parsed.data.action === "reject" ? parsed.data.reason : undefined
+    ).catch(() => {});
+  }
   revalidatePath("/centers");
   return { ok: true, data: { status: center.status } };
 }

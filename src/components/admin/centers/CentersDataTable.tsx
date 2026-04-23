@@ -193,7 +193,7 @@ export function CentersDataTable({ statusFilter, onRowClick }: CentersDataTableP
       const res  = await fetch(`/api/admin/centers?${params}`);
       const json = await res.json();
       setData(json.data ?? []);
-      setPagination(json.pagination);
+      setPagination(json.pagination ?? { page: 1, limit: 20, total: 0, pages: 1 });
     });
   }, [debouncedSearch, sorting, statusFilter, division, type]);
 

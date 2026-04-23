@@ -8,14 +8,37 @@ import { auth } from "@/lib/auth";
 const AppSchema = new mongoose.Schema({}, { strict: false, collection: "center_applications", timestamps: true });
 const CenterApp = mongoose.models.CenterApp ?? mongoose.model("CenterApp", AppSchema);
 
+const DAY_MAP: Record<string, number> = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+};
+
+const CENTER_TYPE_MAP: Record<string, string> = {
+  "Government Hospital": "GOVT_HOSPITAL",
+  "Private Clinic":      "PRIVATE_CLINIC",
+  "Community Center":    "COMMUNITY",
+  "Mobile Unit":         "MOBILE",
+};
+
 // Map center_application doc → Center-shaped object the table expects
 function mapApp(doc: Record<string, unknown>) {
+  const schedule = (doc.schedule ?? {}) as Record<string, Record<string, unknown>>;
+  const operatingHours = Object.entries(schedule)
+    .filter(([, s]) => s.open)
+    .map(([day, s]) => ({
+      day:          DAY_MAP[day.toLowerCase()] ?? 0,
+      morningStart: s.morningStart as string | undefined,
+      morningEnd:   s.morningEnd   as string | undefined,
+      eveningStart: s.eveningStart as string | undefined,
+      eveningEnd:   s.eveningEnd   as string | undefined,
+    }));
+
   return {
     _id:               String(doc._id),
     centerId:          doc.referenceNumber,
     name:              doc.centerName,
     licenseNo:         doc.licenseNumber,
-    type:              "GOVT_HOSPITAL" as const,
+    type:              (CENTER_TYPE_MAP[doc.centerType as string] ?? "GOVT_HOSPITAL") as "GOVT_HOSPITAL" | "PRIVATE_CLINIC" | "COMMUNITY" | "MOBILE",
     status:            "PENDING" as const,
     geoLat:            doc.geoLat ?? 0,
     geoLng:            doc.geoLng ?? 0,
@@ -30,8 +53,9 @@ function mapApp(doc: Record<string, unknown>) {
       phone: doc.phone,
       email: doc.email,
     },
-    dailyCapacity:     doc.capacity ?? 100,
-    totalVaccinations: 0,
+    dailyCapacity:      doc.capacity ?? 100,
+    totalVaccinations:  0,
+    operatingHours,
     facilityLicenseUrl: doc.facilityLicenseUrl,
     centerPhotoUrl:     doc.centerPhotoUrl,
     officerNidUrl:      doc.officerNidUrl,

@@ -55,6 +55,7 @@ export interface ICenter extends Document {
   approvedAt?:       Date;
   suspendedReason?:  string;
   totalVaccinations: number;
+  hashedPassword?:   string;
   createdAt:         Date;
   updatedAt:         Date;
 }
@@ -98,6 +99,8 @@ const CenterSchema = new Schema<ICenter>(
       phone: { type: String, required: true, trim: true },
       email: { type: String, trim: true, lowercase: true },
     },
+
+    hashedPassword:    { type: String },
 
     operatingHours: { type: [OperatingHourSchema], default: [] },
 
